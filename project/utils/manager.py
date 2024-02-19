@@ -17,33 +17,37 @@ class TrainManager:
 
     def thread(self, n):
         try:
-            resp = self.sess.get_actions(account_name="rr.century", pos=self.posrr).json()["actions"]
-            for res in resp:
-                if res["action_trace"]["act"]["name"] in wanted_actions:
-                    self.out.append(res)
-            self.posrr += len(resp)
-
-            resp2 = self.sess.get_actions(account_name="m.century", pos=self.posm).json()["actions"]
-            for res2 in resp2:
-                if res2["action_trace"]["act"]["name"] in ["usefuel", "buyfuel"]:
-                    self.out.append(res2)
-            self.posm += len(resp2)
+            if n == 0:
+                for _ in range(4):
+                    resp = self.sess.get_actions(account_name="rr.century", pos=self.posrr).json()["actions"]
+                    for res in resp:
+                        if res["action_trace"]["act"]["name"] in wanted_actions:
+                            self.out.append(res)
+                    self.posrr += len(resp)
+                    if len(resp) == 0:
+                        break
+            else:
+                for _ in range(2):
+                    resp = self.sess.get_actions(account_name="m.century", pos=self.posm).json()["actions"]
+                    for res in resp:
+                        if res["action_trace"]["act"]["name"] in ["usefuel", "buyfuel"]:
+                            self.out.append(res)
+                    self.posm += len(resp)
+                    if len(resp) == 0:
+                        break 
 
         except Exception as e:
             server = random.choice(pick_best_waxnode("history", 9))
             self.sess.server = server
-
-        if len(resp) == 0:
             time.sleep(2)
-
     def fetch(self):
         start = time.time()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.worker) as executor:
-            for index in range(self.worker):
-                executor.submit(self.thread, index)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2*self.worker) as executor:
+            executor.submit(self.thread, 0)
+            executor.submit(self.thread, 1)
 
-        if time.time() - start < 0.5:
-            time.sleep(0.6 - (time.time() - start))
+        if time.time() - start < 2:
+            time.sleep(2 - (time.time() - start))
 
     def test(self):
         search = True

@@ -57,7 +57,6 @@ def fetchRoutine(mode, server):
     retry = 0
     while running and retry < 40:
         #Limit to max 40 retries.
-        print(retry)
         try:
             jst = fetcher(page=page, after=after)
             for result in jst["data"]:
@@ -78,10 +77,9 @@ def fetchRoutine(mode, server):
             time.sleep(0.7)
         except Exception as e:
             retry += 1
-            if retry % 2 == 0:
-                #To make sure we try multiple endpoints in case one is behaving badly.
-                server = random.choice(pick_best_waxnode("atomic", 6))
-                fetcher = getattr(AH(server=server), mode)
+            #To make sure we try multiple endpoints in case one is behaving badly.
+            server = random.choice(pick_best_waxnode("atomic", 6))
+            fetcher = getattr(AH(server=server), mode)
             postLog(e, "warn", f"{inspect.stack()[0][3]}:{inspect.stack()[0][2]}")
             time.sleep(3)
     return out
@@ -124,7 +122,7 @@ class Builder:
                     session.add(stm)
                     full_cars.append(stm)
                 else:
-                    print(act["action_trace"]["trx_id"], railcar)
+                    print(f'{act["action_trace"]["trx_id"]}, {railcar}')
 
             try:
                 session.commit()

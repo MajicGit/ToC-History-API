@@ -67,15 +67,15 @@ class Logrun(SQLModel, table=True):
 
     locomotives: List["Asset"] = Relationship(
         link_model=LogrunLocomotiveLink,
-        sa_relationship_kwargs=dict(lazy="joined"),
+        sa_relationship_kwargs=dict(lazy="selectin"),
     )
     conductors: List["Asset"] = Relationship(
         link_model=LogrunConductorLink,
-        sa_relationship_kwargs=dict(lazy="joined"),
+        sa_relationship_kwargs=dict(lazy="selectin"),
     )
     cars: List["Car"] = Relationship(
         link_model=LogrunCarLink,
-        sa_relationship_kwargs=dict(lazy="joined"),
+        sa_relationship_kwargs=dict(lazy="selectin"),
     )
     logtips: List["Logtip"] = Relationship(link_model=LogrunTipsLink)
     npcs: List["Npcencounter"] = Relationship(link_model=LogrunNpcencounterLink)
@@ -97,11 +97,11 @@ class Car(SQLModel, table=True):
     type: str
     loads: List["Asset"] = Relationship(
         link_model=CarLoadLink,
-        sa_relationship_kwargs=dict(lazy="joined"),
+        sa_relationship_kwargs=dict(lazy="selectin"),
     )
     car: List["Asset"] = Relationship(
         link_model=CarRailcarLink,
-        sa_relationship_kwargs=dict(lazy="joined"),
+        sa_relationship_kwargs=dict(lazy="selectin"),
     )
 
 
@@ -166,7 +166,7 @@ class Logtip(SQLModel, table=True):
     century: str
     train: str
 
-    tips: List["Tip"] = Relationship(back_populates="logtip", sa_relationship_kwargs=dict(lazy="joined"))
+    tips: List["Tip"] = Relationship(back_populates="logtip", sa_relationship_kwargs=dict(lazy="selectin"))
 
 
 class Tip(SQLModel, table=True):
@@ -177,7 +177,7 @@ class Tip(SQLModel, table=True):
     amount: int
 
     logtip_id: Optional[int] = Field(default=None, foreign_key="logtip.id")
-    logtip: Optional[Logtip] = Relationship(back_populates="tips", sa_relationship_kwargs=dict(lazy="joined"))
+    logtip: Optional[Logtip] = Relationship(back_populates="tips", sa_relationship_kwargs=dict(lazy="selectin"))
 
 
 class Template(SQLModel, table=True):
@@ -189,7 +189,7 @@ class Template(SQLModel, table=True):
     rarity: str
     img: str
 
-    assets: List["Asset"] = Relationship(back_populates="template", sa_relationship_kwargs=dict(lazy="joined"))
+    assets: List["Asset"] = Relationship(back_populates="template", sa_relationship_kwargs=dict(lazy="selectin"))
 
     ## Passengercar
     weight: Optional[int]
@@ -240,7 +240,7 @@ class Asset(SQLModel, table=True):
 
     asset_id: str = Field(sa_column=Column("asset_id", String, unique=True, primary_key=True, nullable=False))
     template_id: Optional[int] = Field(default=None, foreign_key="template.template_id")
-    template: Optional[Template] = Relationship(back_populates="assets", sa_relationship_kwargs=dict(lazy="joined"))
+    template: Optional[Template] = Relationship(back_populates="assets", sa_relationship_kwargs=dict(lazy="selectin"))
 
     region: Optional[str]
     station_name: Optional[str]

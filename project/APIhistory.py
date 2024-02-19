@@ -48,15 +48,15 @@ def on_startup():
 
 
 @app.get("/status", tags=["status"])
-@cache(expire=10)
+@cache(expire=20)
 async def get_info_and_api_status():
     start = time.perf_counter()
     query = select([func.count()])
     with Session(engine) as session:
         posrrr = session.query(Logrun).order_by(Logrun.action_seq.desc()).first()
         posmr = session.query(Usefuel).order_by(Usefuel.action_seq.desc()).first()
-        countl = session.exec(query.select_from(Logrun)).all()
-        countu = session.exec(query.select_from(Usefuel)).all()
+        countl = session.query(Logrun).count()
+        countu = session.query(Usefuel).count()
 
     filler_info = {
         "online": True,
@@ -64,16 +64,16 @@ async def get_info_and_api_status():
         "last_usefuel": posmr.block_time if posmr else "None",
     }
     db_info = {
-        "logrun_count": countl[0],
+        "logrun_count": countl,
         "logrun_last_action_seq": posrrr.action_seq if posrrr else "None",
-        "usefuel_count": countu[0],
+        "usefuel_count": countu,
         "usefuel_last_action_seq": posmr.action_seq if posmr else "None",
     }
     return {"query_time": time.perf_counter() - start, "data": {"filler_state": filler_info, "db_state": db_info}}
 
 
 @app.get("/station", tags=["stations"])
-@cache(expire=5)
+@cache(expire=10)
 async def station_owner_dashboard_query_v3(
     station: str,
     timeframe: int = 24,
@@ -169,7 +169,7 @@ async def station_owner_dashboard_query_v3(
 
 
 @app.get("/stations", tags=["stations"])
-@cache(expire=5)
+@cache(expire=10)
 async def get_station_aggregated_and_ordered(
     owner: str = None, timeframe: int = 24, limit: int = Query(default=1000, le=1000)
 ):
@@ -210,7 +210,7 @@ async def get_station_aggregated_and_ordered(
 
 
 @app.get("/railroader", tags=["railroaders"])
-@cache(expire=5)
+@cache(expire=10)
 async def get_railroader_dashboard(
     railroader: str = None, train: str = None, before: str = None, after: str = None, timeframe: int = 24
 ):
@@ -264,7 +264,7 @@ async def get_railroader_dashboard(
 
 
 @app.get("/railroaders", tags=["railroaders"])
-@cache(expire=5)
+@cache(expire=10)
 async def get_railroader_aggregated_and_ordered(
     before: str = None, after: str = None, limit: int = Query(default=1000, le=1000)
 ):
@@ -314,7 +314,7 @@ async def get_railroader_aggregated_and_ordered(
 
 
 @app.get("/admin_dash", tags=["admin"])
-@cache(expire=10)
+@cache(expire=20)
 async def get_railroader_dashboard(century: str = None, before: str = None, after: str = None, timeframe: int = 24):
     start = time.perf_counter()
 
@@ -362,7 +362,7 @@ async def get_railroader_dashboard(century: str = None, before: str = None, afte
 
 
 @app.get("/buyfuel_aggregate", tags=["admin"])
-@cache(expire=5)
+@cache(expire=10)
 async def get_aggregated_buyfuels(timeframe: int = 24, simple: bool = True):
     start = time.perf_counter()
     qry2 = None
@@ -460,7 +460,7 @@ def buildCar(car):
 
 
 @app.get("/logrun", tags=["admin"], response_model_exclude_defaults=True)
-@cache(expire=5)
+@cache(expire=15)
 async def get_raw_logrun_actions(
     railroader: str = None,
     arrive_station: str = None,
@@ -552,8 +552,8 @@ async def get_raw_logrun_actions(
 
     else:
         # if resource_key == config.resource_key:
-        if limit > 250:
-            limit = 250
+        if limit > 100:
+            limit = 100
 
         transports = session.exec(
             query.options(joinedload(Logrun.cars))
@@ -632,7 +632,7 @@ async def get_raw_logrun_actions(
 
 
 @app.get("/usefuel", tags=["admin"])
-@cache(expire=5)
+@cache(expire=15)
 async def get_raw_usefuel_actions(
     railroader: str = None,
     trx_id: str = None,
@@ -665,7 +665,7 @@ async def get_raw_usefuel_actions(
 
 
 @app.get("/buyfuel", tags=["admin"])
-@cache(expire=5)
+@cache(expire=10)
 async def get_raw_buyfuel_actions(
     railroader: str = None,
     trx_id: str = None,
@@ -698,7 +698,7 @@ async def get_raw_buyfuel_actions(
 
 
 @app.get("/npcencounter", tags=["admin"])
-@cache(expire=5)
+@cache(expire=10)
 async def get_raw_npcecnounter_actions(
     railroader: str = None,
     train: str = None,
@@ -734,7 +734,7 @@ async def get_raw_npcecnounter_actions(
 
 
 @app.get("/logtips", tags=["admin"])
-@cache(expire=5)
+@cache(expire=20)
 async def get_raw_logtips_actions(
     session: Session = Depends(get_session),
     railroader: str = None,
@@ -794,7 +794,7 @@ async def get_raw_logtips_actions(
 
 
 @app.get("/asset", tags=["atomic"], response_model=Template, response_model_exclude_defaults=True)
-@cache(expire=5)
+@cache(expire=10)
 async def get_template_for_asset_by_id(
     asset_id: int,
     session: Session = Depends(get_session),
@@ -824,7 +824,7 @@ async def get_template_for_asset_by_id(
 
 
 @app.get("/template", tags=["atomic"], response_model=Template, response_model_exclude_defaults=True)
-@cache(expire=5)
+@cache(expire=10)
 async def get_template_by_id(
     template_id: int,
     session: Session = Depends(get_session),
