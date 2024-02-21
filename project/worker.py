@@ -90,7 +90,8 @@ def scanTemplates():
         #Loop until we've scanned all. 
         server = pick_best_waxnode("atomic", 6)[0]
         templates = fetchRoutine("templates", server)
-        writer.delay(templates, "template")
+        if len(templates) > 0:
+            writer.delay(templates, "template")
         if len(templates) > 100:
             time.sleep(5)
         if len(templates) < 50000:
@@ -99,7 +100,8 @@ def scanTemplates():
         #Loop until we've scanned all. 
         server = pick_best_waxnode("atomic", 6)[0]
         assets = fetchRoutine("assets", server)
-        writer.delay(assets, "asset")
+        if len(assets) > 0:
+            writer.delay(assets, "asset")
         if len(assets) < 50000:
             break 
 
@@ -530,17 +532,23 @@ def writer(to_write,mode) -> str:
     start=time.perf_counter()
     processor = AchievementProcessor()
     method = getattr(Builder(), f"create_new_{mode}")
-    with Session(engine) as session:
-      session.expire_on_commit = False
-      for item in to_write:
+    commit_times = 0
+    achiv_times = 0
+    for item in to_write:
+      with Session(engine) as session:
+        session.expire_on_commit = False
         new_item = method(session,item)
         if new_item:
+            start_commit = time.perf_counter()
             commited_item = commit_or_rollback(session,new_item)
+            commit_times += time.perf_counter()-start_commit
+            start_achiv = time.perf_counter()
             if commited_item and mode == "action":
                 if isinstance(commited_item, Logrun):
                     processor.process_logrun(session,commited_item,"logrun")
                 if isinstance(commited_item, Npcencounter):
                     processor.process_logrun(session,commited_item,"npcencounter")
+            achiv_times += time.perf_counter()-start_achiv
 
 
-    return f"{(time.perf_counter()-start)} for {len(to_write)} items. mode: {mode}"
+    return f"{(time.perf_counter()-start)} for {len(to_write)} items. mode: {mode}. {commit_times} for the commits themselves {achiv_times} for the achievments"

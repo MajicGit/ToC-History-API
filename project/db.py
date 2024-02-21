@@ -9,7 +9,6 @@ from disclog import postLog
 
 engine = create_engine(
     f"postgresql://{os.getenv('DATABASE_URL','postgresql://postgres:postgres@db:5432/foo').split('://')[1]}",
-    convert_unicode=True,
     pool_recycle=3600,
     pool_size=5,
 )
@@ -36,7 +35,6 @@ def commit_or_rollback(session,new_obj):
         try:
             session.add(new_obj)
             session.commit()
-            session.refresh(new_obj)
         except Exception as e:
             postLog(e,"warn",f"{inspect.stack()[0][3]}:{inspect.stack()[0][2]}")
             session.rollback()
